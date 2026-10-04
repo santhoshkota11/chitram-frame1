@@ -1,0 +1,325 @@
+{
+ "duration": 44,
+ "mood": "warm",
+ "seed": 6,
+ "sfx": [
+  {
+   "t": 0.15,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 0.35,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 0.5,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 0.96,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 1.54,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 2.5,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 7.35,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 8.1,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 9.7,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 10.84,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 10.94,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 11.6,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 16.46,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 17.46,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 18.88,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 20.78,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 22.04,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 22.56,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 23.8,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 24.98,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 26.22,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 30.14,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 31.24,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 31.64,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 32.36,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 33.88,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 34.72,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 35.4,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 36.96,
+   "type": "pop",
+   "gain": 0.22
+  },
+  {
+   "t": 22.72,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 23.96,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 25.14,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 26.38,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 34.04,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 34.88,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 35.56,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 37.12,
+   "type": "click",
+   "gain": 0.14
+  },
+  {
+   "t": 4.06,
+   "type": "swoosh",
+   "dur": 0.35,
+   "gain": 0.3
+  },
+  {
+   "t": 6.98,
+   "type": "swoosh",
+   "dur": 0.35,
+   "gain": 0.3
+  },
+  {
+   "t": 13.46,
+   "type": "swoosh",
+   "dur": 0.35,
+   "gain": 0.3
+  },
+  {
+   "t": 21.7,
+   "type": "swoosh",
+   "dur": 0.35,
+   "gain": 0.3
+  },
+  {
+   "t": 33.38,
+   "type": "swoosh",
+   "dur": 0.35,
+   "gain": 0.3
+  },
+  {
+   "t": 39.56,
+   "type": "swoosh",
+   "dur": 0.35,
+   "gain": 0.3
+  },
+  {
+   "t": 2.94,
+   "type": "impact",
+   "gain": 0.35
+  },
+  {
+   "t": 6.48,
+   "type": "impact",
+   "gain": 0.45
+  },
+  {
+   "t": 9.02,
+   "type": "impact",
+   "gain": 0.3
+  },
+  {
+   "t": 11.8,
+   "type": "impact",
+   "gain": 0.3
+  },
+  {
+   "t": 15.5,
+   "type": "impact",
+   "gain": 0.45
+  },
+  {
+   "t": 10.12,
+   "type": "swoosh",
+   "dur": 0.25,
+   "gain": 0.25
+  },
+  {
+   "t": 11.0,
+   "type": "swoosh",
+   "dur": 1.0,
+   "gain": 0.2
+  },
+  {
+   "t": 27.0,
+   "type": "whoosh",
+   "dur": 0.8,
+   "gain": 0.5
+  },
+  {
+   "t": 27.8,
+   "type": "chime",
+   "gain": 0.35
+  },
+  {
+   "t": 28.62,
+   "type": "swoosh",
+   "dur": 0.45,
+   "gain": 0.3
+  },
+  {
+   "t": 33.02,
+   "type": "impact",
+   "gain": 0.3
+  },
+  {
+   "t": 38.5,
+   "type": "swoosh",
+   "dur": 0.35,
+   "gain": 0.3
+  },
+  {
+   "t": 38.76,
+   "type": "impact",
+   "gain": 0.4
+  },
+  {
+   "t": 39.1,
+   "type": "riser",
+   "dur": 0.7,
+   "gain": 0.3
+  },
+  {
+   "t": 39.84,
+   "type": "impact",
+   "gain": 0.4
+  },
+  {
+   "t": 41.08,
+   "type": "chime",
+   "gain": 0.4
+  },
+  {
+   "t": 42.1,
+   "type": "shimmer",
+   "gain": 0.25
+  }
+ ],
+ "end": {
+  "fade": 0.4
+ },
+ "master": {
+  "reverb": 0.25
+ }
+}
