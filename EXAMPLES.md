@@ -85,7 +85,7 @@ Keep the laptop model, finish and screen content consistent with the references 
 **Why it works:** one hero object for the whole film; dark→light→dark rhythm; every caption beside
 the laptop; each proof beat is a parallel triad; the biggest move (push-in) sits on the brand
 beat; the whip is the single showpiece transition; finish-by and hold are explicit.
-Built film: `examples/aasthi/` (the VO version, 36.5 s, with its brief).
+Its brief: `references/brief-aasthi-film.md` (the built film is archived at `D:\tools\chitram-archive\2026-10-09\examples\aasthi`).
 
 ---
 
@@ -445,8 +445,8 @@ left. 35 mm.
 
 Input: one 42 s selfie-style talking-head clip (1080×1920, 25 fps), the AASTHI logo, the website
 hero screen, and a reference edit ("blue-grid editorial collage", 12 s, 16:9). The playbook is
-SHORTFORM.md. The full build is in `examples/shortform/aasthi-founder/`: `brief.md`,
-`index.html`, the cue sheets, and `EDIT-LEARNS.md`, which holds the frame-by-frame study of the
+SHORTFORM.md. Its brief is `references/brief-aasthi-founder.md`; `references/EDIT-LEARNS-aasthi-founder.md` holds
+(the full build is archived at `D:\tools\chitram-archive\2026-10-09\examples\shortform`) the frame-by-frame study of the
 reference and the lessons learned.
 
 **What made it premium (copy this thinking, not the colours):**

@@ -8,6 +8,7 @@ normalised (default -14 LUFS, true peak -1 dBTP). See SOUND.md.
 mix.json:
 {
   "duration": 44.95,
+  "sfx_lib": "myfilm",                                 # library fetched for this film (audio/source.py kit)
   "voice": "assets/vo/vo.wav",                         # optional; "voice_clean": true = 70 Hz high-pass
   "music": {"file": "assets/music/thunder.mp3", "drop_track": 20.15, "drop_film": 20.8,
             "gain": .55, "pre_gain": 2.4, "duck_db": -10, "fade_in": .6, "fade_out": 1.8},
@@ -17,10 +18,14 @@ mix.json:
     {"t": 7.20, "sfx": "role:impact", "gain_db": -4, "pan": -.2},   # best fit for a role, rotated (no repeats)
     {"t": 9.00, "sfx": "hsl:222", "reverse": true, "align": "end"}, # a reversed boom = a riser ending ON 9.00
     {"t": 9.00, "sfx": "synth:sub", "gain_db": -8},                 # synthesized sub drop under the big hit
+    {"t": 4.20, "sfx": "stack:hit"},                                # a designed layered recipe (sfx_lib.py stacks)
+    {"t": 6.00, "sfx": "role:cut", "width": .5, "space": .15, "room": "hall", "sat": .2},  # processing per sound
     {"t": 12.1, "sfx": "assets/sfx/x.wav", "align": "onset", "rate": 1.04, "hp": 150, "lp": 9000,
      "fade_in": .02, "fade_out": .3, "max_len": 1.2}
   ],
   "sfx_duck_db": -4,       # SFX dip under speech (0 = off). Never let an SFX mask a stressed syllable.
+  "sfx_glue": true, "reverb_gain": 1.0,   # SFX bus compression; overall reverb return level
+  # rooms: room .6 s · plate 1.3 s · hall 2.4 s · cathedral 4.8 s (synthetic, decorrelated, damped)
   "lufs": -14, "true_peak": -1,   # delivery loudness (YouTube/IG/TikTok -14; broadcast -23/-24);
                                   # "lufs": null = a stem for an NLE (levels kept, peak-safe only)
   "master": .93            # only used if ffmpeg loudnorm is unavailable (soft-clip fallback)
@@ -48,6 +53,7 @@ cfg_path = sys.argv[1]
 cfg = json.load(open(cfg_path, encoding="utf-8")); out = sys.argv[2]
 CFG_DIR = os.path.dirname(os.path.abspath(cfg_path))
 N = int(cfg["duration"] * SR)
+sfx_lib.ACTIVE = cfg.get("sfx_lib") or sfx_lib.ACTIVE      # this film's fetched library (audio/source.py)
 _cache = {}
 
 
@@ -90,6 +96,40 @@ def butter(x, kind, hz):
     return ss.sosfilt(sos, x, axis=0).astype(np.float32)
 
 
+ROOMS = {"room": (.6, 7000), "plate": (1.3, 11000), "hall": (2.4, 6500), "cathedral": (4.8, 5000)}  # RT60 s, damping Hz
+_ir = {}
+
+
+def room_ir(name, predelay=.022):
+    """Synthetic stereo reverb impulse: decorrelated noise, exponential RT60 decay, damped highs, unit energy."""
+    if name in _ir: return _ir[name]
+    rt, damp = ROOMS[name]
+    n = int(rt * 1.15 * SR); t = np.arange(n) / SR
+    rng = np.random.default_rng(7)
+    noise = rng.standard_normal((n, 2)).astype(np.float32)
+    noise = butter(noise, "lowpass", damp)
+    ir = noise * np.exp(-6.91 * t / rt)[:, None]
+    ir[:int(.004 * SR)] *= np.linspace(0, 1, int(.004 * SR))[:, None]
+    ir = np.concatenate([np.zeros((int(predelay * SR), 2), np.float32), ir])
+    ir /= np.sqrt((ir ** 2).sum(0, keepdims=True)) + 1e-9
+    _ir[name] = ir.astype(np.float32); return _ir[name]
+
+
+def widen(x, w):
+    """Stereo width 0-1: a short Haas delay on one side (<= 14 ms), mono-safe at w <= .6."""
+    d = int(.004 * SR + .010 * SR * w)
+    y = x.copy(); dl = np.concatenate([np.zeros((d,), np.float32), x[:-d, 1]]) if d < len(x) else x[:, 1]
+    y[:, 1] = (1 - .45 * w) * x[:, 1] + .45 * w * dl
+    y[:, 0] = (1 - .2 * w) * x[:, 0] + .2 * w * x[:, 1]
+    return y
+
+
+def saturate(x, amt):
+    """Soft tape-style saturation 0-1: adds density and harmonics so hits read on phone speakers."""
+    k = 1 + 5 * amt
+    return (np.tanh(x * k) / np.tanh(k)).astype(np.float32)
+
+
 def env_follow(sig, attack=.04, release=.28):
     env = np.convolve(np.abs(sig).max(1), np.ones(960) / 960, "same"); act = (env > .02).astype(np.float32)
     duck = np.zeros(len(sig), np.float32); y = 0.0; ac = np.exp(-1 / (attack * SR)); rc = np.exp(-1 / (release * SR))
@@ -119,8 +159,9 @@ if M:
 
 # ------------------------------------------------------------------ SFX, placed by anchor
 sfx = np.zeros((N, 2), np.float32)
+sends = {}                                                     # reverb send buffers per room
 used, report = {}, []
-for ev in cfg.get("sfx", []):
+for ev in sfx_lib.expand(cfg.get("sfx", [])):
     if isinstance(ev, list):                                   # legacy [t, file, gain, pan]
         ev = {"t": ev[0], "sfx": ev[1], "gain": ev[2] if len(ev) > 2 else .5, "pan": ev[3] if len(ev) > 3 else 0,
               "align": "start"}
@@ -168,11 +209,32 @@ for ev in cfg.get("sfx", []):
             fo = min(cut, int(.12 * SR)); x = x[:cut]; x[-fo:] *= np.linspace(1, 0, fo)[:, None]
     if ev.get("fade_in"): k = min(len(x), int(ev["fade_in"] * SR)); x[:k] *= np.linspace(0, 1, k)[:, None]
     if ev.get("fade_out"): k = min(len(x), int(ev["fade_out"] * SR)); x[-k:] *= np.linspace(1, 0, k)[:, None]
+    if ev.get("sat"): x = saturate(x / (np.abs(x).max() + 1e-9) * .9, ev["sat"]) * (np.abs(x).max() + 1e-9) / .9
+    if ev.get("width"): x = widen(x, min(1.0, ev["width"]))
     g = ev["gain"] if "gain" in ev else 10 ** (ev.get("gain_db", -6) / 20)
     start = int(round((ev["t"] - a) * SR))
     place(sfx, x, start, g * level, ev.get("pan", 0))
+    if ev.get("space"):                                        # reverb send (post-fader)
+        room = ev.get("room", "hall")
+        if room not in ROOMS: raise SystemExit(f"room {room}? use {', '.join(ROOMS)}")
+        sends.setdefault(room, np.zeros((N, 2), np.float32))
+        place(sends[room], x, start, g * level * ev["space"], ev.get("pan", 0))
     report.append(f"{ev['t']:8.3f}s  {align:<5} anchor {a:5.3f}s -> starts {start / SR:8.3f}s  "
                   f"{20 * np.log10(max(g * level, 1e-6)):+6.1f} dB  {name}" + (f"  ({ev['note']})" if ev.get("note") else ""))
+
+from scipy.signal import fftconvolve
+for room, buf in sends.items():                                # one convolution per room; tail kept clean of mud
+    if not buf.any(): continue
+    wet = np.stack([fftconvolve(buf[:, c], room_ir(room)[:, c])[:N] for c in (0, 1)], 1).astype(np.float32)
+    sfx += butter(wet, "highpass", 180) * cfg.get("reverb_gain", 1.0)
+if cfg.get("sfx_glue", True) and sfx.any():                   # bus glue: gentle 3:1 compression, 8 ms / 140 ms
+    lvl = np.sqrt(np.convolve((sfx ** 2).mean(1), np.ones(480) / 480, "same")) + 1e-9
+    thr = 10 ** (-20 / 20) * np.abs(sfx).max()
+    gr = np.where(lvl > thr, (thr / lvl) ** (1 - 1 / 3), 1.0).astype(np.float32)
+    y = 1.0; a_c, r_c = np.exp(-1 / (.008 * SR)), np.exp(-1 / (.14 * SR)); sm = np.empty_like(gr)
+    for i in range(0, N, 32):
+        c = a_c if gr[i] < y else r_c; y = gr[i] + (y - gr[i]) * c ** 32; sm[i:i + 32] = y
+    sfx *= sm[:, None]
 
 duck_db = cfg.get("sfx_duck_db", -4 if cfg.get("voice") else 0)
 if duck_db:

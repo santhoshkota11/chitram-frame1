@@ -539,5 +539,5 @@ Rules that came out of it:
 7. **Sound is half of "viral".** A real beat with a drop on the biggest reveal + sample SFX on every
    cut; synthesised pads alone felt flat. Copyrighted trending songs go on at upload, not in the file.
 
-Reference styles the client studied and wants reused (Oct 2026): `examples/studies/STYLE-STUDIES.md` —
+Reference styles the client studied and wants reused (Oct 2026): `references/STYLE-STUDIES.md` —
 A · Gold Premium Talking Head (for footage of a speaker), B · Minimal Kinetic Green (faceless). Read it before choosing a style.

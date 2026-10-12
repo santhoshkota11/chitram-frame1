@@ -5,9 +5,11 @@ sound for each edit event. See SOUND.md.
     python audio/sfx_lib.py list   [--lib hsl] [--cat whoosh]          one line per sound
     python audio/sfx_lib.py search "deep impact" [--cat impact] [--max 1.5] [--n 10]
     python audio/sfx_lib.py roles                                      the edit roles and their best fits
+    python audio/sfx_lib.py stacks                                     designed cinematic layer recipes (stack:hit ...)
     python audio/sfx_lib.py pick   cut [--n 5] [--seed 3]               candidates for one role
-    python audio/sfx_lib.py spot   events.json mix.json                 events -> SFX cue list for mixdown.py
+    python audio/sfx_lib.py spot   events.json mix.json [--lib film]    events -> SFX cue list for mixdown.py
     python audio/sfx_lib.py sheet  hsl:137 hsl:105 ... [--out sheet.png]  draw envelopes (you can't listen: look)
+    python audio/sfx_lib.py spec   mix.wav [--marks 3.2,7.5] [--out spec.png]   see a mix: hits, tails, sub, mud
     python audio/sfx_lib.py catalog [--out SFX-CATALOG.md]              markdown catalog of all libraries
 
 Why measure: library files are often padded (a 0.4 s whoosh inside a 10 s file), and every sound has
@@ -30,12 +32,12 @@ AUDIO_EXT = (".wav", ".aif", ".aiff", ".flac", ".mp3", ".ogg", ".m4a")
 
 # ------------------------------------------------------------------ classification (name first, then audio)
 CATS = [  # order matters: first match wins
-    ("riser",   r"reverse|riser|rise|swell|build|uplift|suck"),
+    ("riser",   r"reverse|riser|rise|swell|build|uplift|suck|tension"),
     ("glitch",  r"glitch|stutter|distort.*beep|data.?beep|bleep"),
     ("ui",      r"tech|interface|button|beep|digital|error|alarm|computer|notification"),
     ("whoosh",  r"whoosh|swoosh|swish|whip|swipe|pass.?by|fly.?by|woosh"),
-    ("boom",    r"boom|explod|detonat|implo|thunder|bomb"),
-    ("impact",  r"impact|hit|slam|thud|punch|downer|kick|stamp|crash|smash"),
+    ("boom",    r"boom|explod|detonat|implo|thunder|bomb|braam|horn hit"),
+    ("impact",  r"impact|hit|slam|thud|punch|downer|kick|stamp|crash|smash|808|bass drop|sub drop"),
     ("pop",     r"pop|bubble|pluck|blip"),
     ("click",   r"click|switch|latch|slider|tap|shutter|flick|snap|hang.?up"),
     ("chime",   r"bell|ding|chime|shimmer|gleam|sparkle|twinkle|glass"),
@@ -96,6 +98,75 @@ ROLES = {
 
 PREFER = {r: ("hit",) for r in ("impact", "boom", "sub", "pop", "click", "ding", "ui", "shutter", "heartbeat")}
 PREFER.update({r: ("swell",) for r in ("cut", "whip", "swoosh", "transition")})
+
+
+# Designed cinematic stacks: one cue -> 2-4 processed layers (transient + body + sub + air/tail).
+# dt = seconds relative to the cue time; gain_db is added to the cue's own gain_db (default 0).
+# Processing keys (mixdown.py): space (reverb send 0-1) + room (room|plate|hall|cathedral), width (0-1),
+# sat (0-1 saturation), hp/lp (Hz), max_len, reverse.
+STACKS = {
+    "hit": ("key word / title slam: whip in, punchy impact, sub, short hall", [
+        {"sfx": "role:whip", "dt": -.04, "gain_db": -12, "align": "peak", "width": .4},
+        {"sfx": "role:impact", "gain_db": -3, "sat": .35, "space": .22, "room": "hall"},
+        {"sfx": "synth:sub", "gain_db": -9}]),
+    "reveal": ("showpiece reveal / logo: reversed-boom riser INTO a boom + sub + big hall", [
+        {"sfx": "role:boom", "reverse": True, "align": "end", "gain_db": -10, "width": .5, "space": .25, "room": "hall"},
+        {"sfx": "role:boom", "gain_db": -2, "sat": .2, "space": .35, "room": "hall", "width": .3},
+        {"sfx": "synth:sub:2.4", "gain_db": -7}]),
+    "trailer": ("braam-style trailer hit: boom + tonal impact + sub, saturated, cathedral tail", [
+        {"sfx": "role:boom", "gain_db": -3, "sat": .5, "space": .4, "room": "cathedral", "width": .4},
+        {"sfx": "role:tonal", "gain_db": -8, "sat": .3, "space": .3, "room": "cathedral"},
+        {"sfx": "synth:sub:2.8", "gain_db": -6}]),
+    "whoosh_hit": ("transition that lands on a hit: whoosh peak just before, impact on the frame", [
+        {"sfx": "role:whip", "dt": -.03, "gain_db": -6, "align": "peak", "width": .5, "space": .12, "room": "plate"},
+        {"sfx": "role:impact", "gain_db": -6, "sat": .25, "space": .18, "room": "hall"}]),
+    "transition": ("big world change: heavy whoosh, wide, low sub under the swap", [
+        {"sfx": "role:transition", "gain_db": -4, "align": "peak", "width": .6, "space": .18, "room": "hall"},
+        {"sfx": "synth:sub:1.2", "gain_db": -13}]),
+    "cut": ("snappy cut: short whoosh, wide, dry-ish", [
+        {"sfx": "role:cut", "gain_db": -7, "align": "peak", "width": .45, "space": .08, "room": "plate"}]),
+    "pop": ("card / sticker pop: air swoosh into a pop", [
+        {"sfx": "role:swoosh", "dt": -.05, "gain_db": -16, "align": "peak", "width": .3},
+        {"sfx": "role:pop", "gain_db": -9, "space": .1, "room": "room"}]),
+    "glitch": ("glitch transition: glitch slice + short whoosh on the clean frame", [
+        {"sfx": "role:glitch", "gain_db": -9, "width": .4, "max_len": .6},
+        {"sfx": "role:cut", "gain_db": -12, "align": "peak"}]),
+    "drop": ("reinforce a music drop / beat switch: sub + low boom", [
+        {"sfx": "synth:sub:1.6", "gain_db": -6},
+        {"sfx": "role:boom", "gain_db": -9, "hp": 35, "space": .25, "room": "hall", "max_len": 2.5}]),
+    "blackout": ("cut to black / big statement: boom into a long tail, then silence", [
+        {"sfx": "role:boom", "gain_db": -5, "space": .5, "room": "cathedral", "max_len": 3.5, "width": .4},
+        {"sfx": "synth:sub:2.0", "gain_db": -7}]),
+    "tension_hit": ("riser ending on an impact + sub", [
+        {"sfx": "role:riser", "align": "end", "gain_db": -8, "width": .5, "space": .15, "room": "hall"},
+        {"sfx": "role:impact", "gain_db": -4, "sat": .3, "space": .2, "room": "hall"},
+        {"sfx": "synth:sub", "gain_db": -9}]),
+    "ui": ("screen interaction: click + soft UI texture", [
+        {"sfx": "role:click", "gain_db": -11, "space": .06, "room": "room"},
+        {"sfx": "role:ui", "dt": .02, "gain_db": -18, "max_len": .4}]),
+    "ding": ("logo lock / success: bright ding in a plate, low-passed", [
+        {"sfx": "role:ding", "gain_db": -9, "lp": 9000, "space": .3, "room": "plate", "width": .3}]),
+}
+
+
+def expand(events):
+    """Expand 'stack:<name>' cues into their layers (mixdown.py and timeline.py both call this)."""
+    out = []
+    for ev in events:
+        if isinstance(ev, dict) and str(ev.get("sfx", "")).startswith("stack:"):
+            name = ev["sfx"][6:]
+            if name not in STACKS: raise SystemExit(f"unknown stack {name}; have: {', '.join(STACKS)}")
+            for k, L in enumerate(STACKS[name][1]):
+                e = {kk: vv for kk, vv in L.items() if kk != "dt"}
+                e["t"] = round(ev["t"] + L.get("dt", 0), 4)
+                e["gain_db"] = L.get("gain_db", -6) + ev.get("gain_db", 0)
+                for kk in ("pan", "seed"):
+                    if kk in ev: e[kk] = ev[kk]
+                e["note"] = f"stack:{name}[{k}]" + (f" {ev['note']}" if ev.get("note") else "")
+                out.append(e)
+        else:
+            out.append(ev)
+    return out
 
 
 def classify(name, st):
@@ -229,8 +300,14 @@ def load_lib(name):
     return idx
 
 
+ACTIVE = os.environ.get("CHITRAM_SFX_LIB")   # restrict picks to one film's library (mixdown sets it from mix.json)
+
+
 def all_sounds(lib=None):
     out = []
+    lib = lib or ACTIVE
+    if not reg():
+        raise SystemExit("no SFX library yet: fetch one for this film first -> python audio/source.py kit cinematic --to films/<n>/assets/sfx --lib <n>")
     for n in ([lib] if lib else reg().keys()):
         out += load_lib(n)
     return out
@@ -244,15 +321,21 @@ def num_id(fname):
 def resolve(ref, used=None, seed=0):
     """'hsl:137' | 'hsl:<file>' | 'role:cut' | a path -> sound dict (path + anchors). None for plain paths
     and for 'synth:' sounds (mixdown.py makes those)."""
-    if ref.startswith("synth:"):
+    if ref.startswith("synth:") or ref.startswith("stack:"):
         return None
     if ref.startswith("role:"):
         c = candidates(ref[5:])
         if not c: raise SystemExit(f"no sound fits role {ref}")
         used = used if used is not None else {}
         k = used.get(ref, seed)
-        used[ref] = k + 1
-        return c[k % min(len(c), 6)]          # rotate through the best 6: never the same file twice in a row
+        recent = used.setdefault("__recent", [])             # files of the last 4 cues, across ALL roles
+        pool = c[:max(6, min(len(c), 8))]
+        for j in range(len(pool)):                           # rotate through the best 6-8, skipping recent files
+            pick = pool[(k + j) % len(pool)]
+            if pick["path"] + str(pick.get("slice")) not in recent: break
+        used[ref] = k + j + 1
+        recent.append(pick["path"] + str(pick.get("slice"))); del recent[:-4]
+        return pick
     if ":" in ref and not os.path.exists(ref) and not re.match(r"^[A-Za-z]:[\\/]", ref):
         lib, key = ref.split(":", 1)
         for s in load_lib(lib):
@@ -335,8 +418,11 @@ def cmd_index(a):
             c["tags"] = tags(st["name"], c) + ["slice"]
             idx.append(c)
         if i % 25 == 0: print(f"{i}/{len(files)} {st['name']}")
-    os.makedirs(os.path.join(HERE, "library"), exist_ok=True)
-    ip = os.path.join("library", f"{name}.index.json")
+    if dest:                                          # imported copies live in the skill
+        os.makedirs(os.path.join(HERE, "library"), exist_ok=True)
+        ip = os.path.join("library", f"{name}.index.json")
+    else:                                             # a film's fetched sounds: the index stays with the film
+        ip = os.path.abspath(os.path.join(folder, "_sfx_index.json"))
     json.dump(idx, open(os.path.join(HERE, ip), "w", encoding="utf-8"), indent=0)
     r = reg()
     r[name] = {"path": os.path.abspath(folder), "index": ip.replace("\\", "/"), "count": len(idx)}
@@ -386,12 +472,19 @@ def cmd_pick(a):
 def cmd_spot(a):
     """events.json: [{"t": 3.48, "role": "cut"}, {"t": 7.2, "role": "impact", "gain_db": -3}, ...]
     or {"events": [...], "voice": ..., "music": ...}.  Writes/merges the "sfx" list of a mixdown.py config."""
+    global ACTIVE
+    ACTIVE = opt(a, "--lib") or ACTIVE
     ev = json.load(open(a[0], encoding="utf-8"))
     ev = ev["events"] if isinstance(ev, dict) else ev
     out = a[1]
     cfg = json.load(open(out, encoding="utf-8")) if os.path.exists(out) else {}
     used, sfx, last = {}, [], {}
     for e in sorted(ev, key=lambda e: e["t"]):
+        if e.get("stack") or str(e.get("sfx", "")).startswith("stack:"):
+            st = e.get("sfx") or f"stack:{e['stack']}"
+            sfx.append({"t": e["t"], "sfx": st, "gain_db": e.get("gain_db", 0), **({"pan": e["pan"]} if "pan" in e else {}),
+                        "note": e.get("note", STACKS[st[6:]][0])})
+            continue
         ref = e.get("sfx") or f"role:{e['role']}"
         s = resolve(ref, used, e.get("seed", 0))
         if s and last.get(e.get("role")) == s["id"]:           # never the same file twice in a row
@@ -407,7 +500,7 @@ def cmd_spot(a):
     cfg["sfx"] = sfx
     cfg.setdefault("duration", round(max(e["t"] for e in ev) + 2, 2))
     json.dump(cfg, open(out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    for i in sfx: print(f"{i['t']:7.2f}  {i['sfx']:<9} align={i['align']:<5} {i['gain_db']:+.0f} dB  {i.get('note', '')}")
+    for i in sfx: print(f"{i['t']:7.2f}  {i['sfx']:<17} align={i.get('align', 'stack'):<5} {i['gain_db']:+.0f} dB  {i.get('note', '')}")
     print(f"-> {out}  ({len(sfx)} cues). Then: python audio/mixdown.py {out} assets/mix.wav")
 
 
@@ -447,6 +540,29 @@ def cmd_sheet(a):
     img.save(out); print("->", out)
 
 
+def cmd_spec(a):
+    """Spectrogram of a mix/stem with a seconds ruler and optional marks: see transients, tails, sub, mud."""
+    import numpy as np, soundfile as sf
+    from PIL import Image, ImageDraw
+    from scipy.signal import stft
+    x, sr = sf.read(a[0], always_2d=True); m = x.mean(1)
+    marks = [float(v) for v in (opt(a, "--marks") or "").split(",") if v]
+    out = opt(a, "--out", os.path.splitext(a[0])[0] + "_spec.png")
+    f, t, Z = stft(m, sr, nperseg=2048, noverlap=1536)
+    S = 20 * np.log10(np.abs(Z) + 1e-9)
+    fi = np.unique(np.geomspace(1, len(f) - 1, 320).astype(int)); S = np.clip((S[fi] + 90) / 80, 0, 1)
+    W = max(900, min(2400, int(len(m) / sr * 100)))
+    img = Image.fromarray((np.flipud(S) * 255).astype(np.uint8)).resize((W, 320)).convert("RGB"); d = ImageDraw.Draw(img)
+    D = len(m) / sr; step = 1 if D <= 30 else 5
+    for k in range(0, int(D) + 1, step):
+        xx = int(k / D * W); d.line([(xx, 0), (xx, 8)], fill=(255, 80, 80)); d.text((xx + 2, 10), f"{k}s", fill=(255, 200, 200))
+    for mk in marks:
+        xx = int(mk / D * W); d.line([(xx, 24), (xx, 320)], fill=(80, 200, 255))
+    for hz, lab in ((100, "100Hz"), (1000, "1k"), (8000, "8k")):
+        yy = 320 - int(np.searchsorted(f[fi], hz) / len(fi) * 320); d.text((W - 44, yy - 6), lab, fill=(160, 255, 160))
+    img.save(out); print("->", out, "(blue lines = --marks; bottom = sub, top = air)")
+
+
 def cmd_catalog(a):
     out = opt(a, "--out", os.path.join(os.path.dirname(HERE), "SFX-CATALOG.md"))
     lines = ["# SFX catalog (generated by audio/sfx_lib.py catalog — do not edit by hand)", "",
@@ -469,8 +585,12 @@ def opt(a, name, default=None, cast=str):
 
 
 if __name__ == "__main__":
-    cmds = {"index": cmd_index, "list": cmd_list, "search": cmd_search, "roles": cmd_roles, "pick": cmd_pick,
-            "spot": cmd_spot, "sheet": cmd_sheet, "catalog": cmd_catalog}
+    def cmd_stacks(a):
+        for k, (d, L) in STACKS.items():
+            print(f"stack:{k:<12} {d}")
+            for l in L: print("      ", {kk: vv for kk, vv in l.items()})
+    cmds = {"stacks": cmd_stacks, "index": cmd_index, "list": cmd_list, "search": cmd_search, "roles": cmd_roles, "pick": cmd_pick,
+            "spot": cmd_spot, "sheet": cmd_sheet, "spec": cmd_spec, "catalog": cmd_catalog}
     if len(sys.argv) < 2 or sys.argv[1] not in cmds:
         print(__doc__); sys.exit(1)
     cmds[sys.argv[1]](sys.argv[2:])

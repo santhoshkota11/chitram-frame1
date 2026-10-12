@@ -109,8 +109,12 @@ def add_mix(a):
              "src_out": round(min(d, s_in + mix["duration"] - r_in), 4), "rec_in": round(r_in, 4),
              "note": f"drop at film {M.get('drop_film', 0)}s; duck {M.get('duck_db', -10)} dB under voice"}]})
     lanes, used = [[]], {}
-    for ev in mix.get("sfx", []):
+    for ev in sfx_lib.expand(mix.get("sfx", [])):
         if isinstance(ev, list): ev = {"t": ev[0], "sfx": ev[1], "align": "start"}
+        if str(ev["sfx"]).startswith("synth:"):                  # generated in the mix: only in the SFX stem
+            tl.setdefault("markers", []).append({"t": ev["t"], "name": "SUB", "color": "purple",
+                                                 "note": f"{ev['sfx']} (in the SFX stem, not a clip)"})
+            continue
         s = sfx_lib.resolve(ev["sfx"], used, ev.get("seed", 0))
         if s:
             t0 = s["slice"][0] if "slice" in s else 0.0

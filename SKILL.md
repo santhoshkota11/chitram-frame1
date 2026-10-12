@@ -1,6 +1,6 @@
 ---
 name: chitram-film
-description: Motion-design studio, editor and sound designer as a skill. Understands any input — an idea, a vibe, a timecoded prompt, screenshots/logo/URL, a voiceover, raw footage, multi-cam takes + a script, or a reference video (it watches the frames) — writes an expert Production Prompt and builds the film as HTML/CSS/GSAP rendered frame-accurately to MP4. Use to make, animate, edit, re-time or render any video, promo, ad, explainer, reel/short, motion graphic, kinetic type, logo sting or title card; to EDIT footage into premium short-form (talking head, podcast, UGC: natural cuts, captions, B-roll); to EDIT long-form YouTube (script-faithful assembly, A/B/C multi-cam, screencasts, overlay briefs, no-blink continuity, hand-off to DaVinci Resolve/Premiere as OTIO/XML/EDL + alpha overlays); for a pro SOUND pass (SFX library spotting, whooshes/impacts/risers on the frame, music drop, -14 LUFS mix); to break down a video or give its prompt; or when the user pastes a timecoded prompt ("00:00–00:03 | THE HOOK …").
+description: Motion studio, editor, sound designer and music-video maker as a skill. Understands any input (idea, vibe, timecoded prompt, screenshots/logo, voiceover, song, raw or multi-cam footage + script, or a reference video it watches frame by frame), writes an expert Production Prompt and builds the film in HTML/CSS/GSAP, rendered frame-accurately to MP4. Use to make, edit or render any video, promo, ad, explainer, reel/short, MUSIC VIDEO or lyric video, motion graphic or logo sting; to edit footage into short-form or long-form YouTube (multi-cam, screencasts, Resolve/Premiere hand-off); to research trends and fetch SFX, BGM and music from the internet (licence-checked), fit music and cut to the beat for Instagram virality; for cinematic/viral animation (zoom-in, wiggle, wipes, 3D flip/zoom/xyz, splatter, tear, depth of field, pop-up, shine, light sweep, particles, handheld, speed ramps); or to break down a video or give its prompt.
 ---
 
 # Chitram Film — the guide
@@ -10,8 +10,9 @@ developer and editor. Your standard is the best product films in the world (Appl
 Buck, ManvsMachine). You do not produce "okay". You finish the task — whatever the user asked —
 to that standard, and you prove it before you hand it over.
 
-The files below carry the craft (SHORTFORM.md, LONGFORM.md and SOUND.md are add-ons for footage edits,
-long-form YouTube and sound; CONNECTORS.md is how external tools plug in). Read them; don't work from memory:
+The files below carry the craft (SHORTFORM.md, LONGFORM.md, SOUND.md and MUSIC.md are add-ons for footage
+edits, long-form YouTube, sound and music; CONNECTORS.md is how external tools plug in). Read them; don't work
+from memory:
 
 | File | What's in it | Read it when |
 |---|---|---|
@@ -20,8 +21,10 @@ long-form YouTube and sound; CONNECTORS.md is how external tools plug in). Read 
 | `ENGINE.md` | the law of the build, research protocol, edit protocol, runtime contract, kit API, motion/editing craft, recipes, QA, render | before writing or changing any code |
 | `SHORTFORM.md` | **add-on for editing real footage into premium short-form**: ingest + understand the talk, natural cuts (pauses, fillers, retakes), jump-cut cover, beat plan, 6 house styles, asset sourcing, synced captions, voice-first mix, QA | whenever the user gives footage to edit (with or without a reference) |
 | `LONGFORM.md` | **add-on for long-form YouTube**: stage discipline, script-faithful assembly, take choice, multi-cam sync + A/B/C roles, on-screen briefs, no-blink visual continuity, screencasts, hook + retention, grade, export rules, NLE realities, stage-by-stage QA | long-form / multi-cam / screencast edits, or any work inside an NLE project |
-| `SOUND.md` | **sound design add-on**: the law of sound, the imported 308-sound library (`hsl`), event→sound grammar, sync anchors, layering recipes, mix, loudness specs, spot→mix→verify workflow | any SFX / music / mix work (not when the user wants VO only) |
-| `SFX-CATALOG.md` | generated list of every library sound with measured anchors (onset, peak, length, level) | when choosing a specific sound by hand |
+| `SOUND.md` | **sound design add-on**: the law of sound, sounds fetched per film from the internet (`audio/source.py`), event→sound grammar, sync anchors, layering recipes, mix, loudness specs, spot→mix→verify workflow | any SFX / music / mix work (not when the user wants VO only) |
+| `MUSIC.md` | **music supervisor + music editor**: concept → music brief, genre/mood/BPM map, Instagram virality (trending vs original audio, account licences, Telugu/Indian context), fitting a track to length with the drop on the reveal, cutting picture to beats/bars/phrases, velocity edits | any film or edit with music, or "which music should I use" |
+| `MUSICVIDEO.md` | **music videos / lyric videos / beat edits**: song analysis + lyric timing, storyboard with reads, chapters on song sections, chorus escalation, the full animation catalogue by asset type (camera moves, transitions, reveals), subagent split, review loop | any music video, lyric video, beat-synced montage or velocity edit |
+| `references/` | your house style studies (Gold Premium Talking Head, Minimal Kinetic Green), the Aasthi edit learnings and briefs | "my style", "gold edit", "green minimal", or a similar job |
 | `CONNECTORS.md` | how external tools plug in: the hand-off pack (timeline.json → OTIO/XML/EDL, stems, alpha overlays), safety rules, Resolve MCP/API, generators, verified-connector log | before using any NLE / generator / delivery tool, or when handing an edit to another editor |
 
 ---
@@ -43,7 +46,10 @@ long-form YouTube and sound; CONNECTORS.md is how external tools plug in). Read 
 | a creator intro / personal-brand film from one photo + a script ("introduce me", "launch my page") | style frames → the MP4 | DIRECTOR §13 taste log → §4 → EXAMPLES #12 → ENGINE §6.15–6.19 (ED kit, Open Peeps + dotify, push-through) → §10.2 audio |
 | **long-form YouTube** (script + multi-cam takes + screencasts), "make the assembly / radio cut", "write the briefs", "finish the episode" | only the ordered stage: assembly timeline, briefs as markers, the edit, or the finish — handed off as OTIO/XML/EDL | LONGFORM §1 stage → §2 assembly → §3 sync + angles → §4 briefs → §5–§8 → CONNECTORS §1 hand-off → §13 QA |
 | "study / compare this finished edit" (an author's final vs ours) | confirmed findings, observation vs hypothesis | LONGFORM §0, §14 (change nothing) |
-| "add SFX / sound design / whooshes / make it sound premium" | SFX + mix on the film or edit, cue report | SOUND §0 → §2 spotting → §4 layers → §7 spot → mixdown → verify |
+| "add SFX / sound design / whooshes / make it sound premium / cinematic" | SFX + mix on the film or edit, cue report, spectrogram | SOUND §0 → §2 spotting → §4–§4b stacks + processing → §7 spot → mixdown → `spec` |
+| "add music / BGM", "which song for this reel", "make it viral", "cut it to the beat", "velocity edit" | music brief → chosen + fitted track (or the exact in-app trending sound + where it starts) → picture cut on the grid with FX | MUSIC §1 brief → §2–§4 choose → §5 `music.py analyse/fit` → §6 cut + ENGINE §4 FX kit → SOUND §5 mix |
+| **music video / lyric video** (a song ± footage, photos, AI clips, characters) | storyboard → the MP4 cut and animated to the song | MUSICVIDEO §1 analyse → §2 storyboard → §3 build → §4 animations → §6 review → MUSIC §5 fit (if shorter) → SOUND stacks |
+| "make it more cinematic / add effects / grain / flash / shake / speed ramp" | the same film with a coherent FX finish | ENGINE §4 FX kit (one look per film; FX on meaningful beats) |
 | "send it to Resolve / Premiere", "give me the project / XML", connect a tool | the hand-off pack (+ live conform if the tool is connected) | CONNECTORS §1 → §2 rules → §4 |
 | "change X" on a film we made | the same film with only X changed | ENGINE §E (surgical) → EXAMPLES #9 |
 | something you don't know how to do | research, then do it | ENGINE §R |
@@ -88,7 +94,9 @@ mkdir -p refs/r1 && ffmpeg -v error -i ref.mp4 -vf "fps=4,scale=480:-1,tile=6x4"
 
 # build a film (ENGINE)
 node $SKILL/bin/init.mjs films/<name> --duration 30 --size 1920x1080
-python3 $SKILL/audio/synth.py films/<name>/cues.json films/<name>/assets/score.wav
+python3 $SKILL/audio/music.py analyse track.mp3                        # BPM, bars, sections, drops → read the png
+python3 $SKILL/audio/music.py fit track.mp3 --duration 30 --drop-at 12 --out films/<name>/assets/music_fit.wav
+python3 $SKILL/audio/mixdown.py films/<name>/mix.json films/<name>/assets/mix.wav
 node $SKILL/bin/check.mjs  films/<name> --strict
 node $SKILL/bin/render.mjs films/<name> --at scenes          # storyboard / contact sheet → Read it
 node $SKILL/bin/render.mjs films/<name> --out films/<name>/out/<name>.mp4
@@ -101,11 +109,16 @@ $SF cut footage.mp4 work --size 1080x1920 --fps 25       # master.mp4/.wav, word
 node $SKILL/bin/init.mjs films/<name> --template shortform --size 1080x1920 --fps 25 --duration <d> --frames <n> --face x,y,w,h
 $SF frames work/master.mp4 films/<name>/assets/clip ; $SF cutout … ; $SF mix … ; $SF finish raw.mp4 final.mp4
 
-# sound (SOUND.md): library of 308 measured SFX, spotting, anchored mix, -14 LUFS
+# sound + music from the internet (SOUND.md §1, MUSIC.md §3): nothing ships with the skill
+python3 $SKILL/audio/source.py trends --region India --niche "<niche>"   # live trend research queries
+python3 $SKILL/audio/source.py kit cinematic --to films/<name>/assets/sfx --lib <name>   # SFX kit for this film
+python3 $SKILL/audio/source.py music "dark cinematic trailer" --bpm 120 --mood dark --to films/<name>/assets/music
 python3 $SKILL/audio/sfx_lib.py roles                                   # roles → best sounds (pick/search/list/sheet)
+python3 $SKILL/audio/sfx_lib.py stacks                                  # cinematic layer recipes: stack:hit, reveal, drop …
+python3 $SKILL/audio/sfx_lib.py spec assets/mix.wav --marks 3.2,7.5      # spectrogram of the mix with cut lines
 python3 $SKILL/audio/sfx_lib.py spot events.json films/<name>/mix.json   # [{"t":3.48,"role":"cut"},...] → cues
 python3 $SKILL/audio/mixdown.py films/<name>/mix.json films/<name>/assets/mix.wav   # + mix.wav.cues.txt
-python3 $SKILL/audio/sfx_lib.py sheet hsl:184 hsl:153 --out sheet.png   # see the sounds you can't hear
+python3 $SKILL/audio/sfx_lib.py sheet <name>:12 <name>:5 --out sheet.png   # see the sounds you can't hear
 
 # long-form + NLE hand-off (LONGFORM.md, CONNECTORS.md)
 python3 $SKILL/tools/timeline/sync.py master.wav camA.mp4 camB.mp4      # multi-cam offsets + drift
@@ -122,18 +135,21 @@ python3 $SKILL/tools/commons.py search "<object>" 8 ; python3 $SKILL/tools/mixki
 python3 $SKILL/audio/mixdown.py mix.json films/<name>/assets/mix.wav                         # voice + music drop + SFX
 ```
 
-Tools in the folder: `engine/` (runtime, motion kit, fonts, GSAP) · `bin/` (init, render, check,
-preview) · `audio/` (synth.py score/SFX/VO mix, align_vo.py VO phrases) · `tools/` (prep_image.py
+Tools in the folder: `engine/` (runtime with time-remap, motion kit, fonts, GSAP) · `engine/fx-kit.js`
+(FX: speed ramps, beat punch/pulse/cuts, shake, flash, light leak, grain, vignette, glow, grades,
+letterbox, zoom-blur, RGB split + the music-video pack: rig, handheld, wiggle, zoomIn, wipes, slideWipe,
+flip3d, splatter, tear, DoF, parallax, zoom3d, xyz, popUp, shine, sweepLight, particles) · `bin/` (init, render incl. `--alpha`, check, preview) · `audio/`
+(music.py analyse/fit/cuts/sheet, sfx_lib.py, mixdown.py, align_vo.py VO phrases) · `tools/` (prep_image.py
 crop/unwarp/key/palette, prep_video.sh footage prep, `shortform/sf.py` footage edit toolkit) ·
 `engine/shortform-kit.js` + `shortform.css` (SF: synced captions, pops, blur-cuts, punch-ins) ·
 `engine/editorial-kit.js` (ED: on-twos, word clock, ikigai circle-over-word, iris, tear, boil, push-through, walk, jump) ·
 `tools/peeps/` (Open Peeps CC0 characters: busts, full body, back view) · `tools/dotify.py` (dot print) ·
 `tools/commons.py` (Wikimedia images/audio + credits) · `tools/mixkit.py` (free SFX/music) ·
 `audio/tts_vo.py` (TTS VO + word timings) · `audio/mixdown.py` (voice + music drop + anchored SFX,
--14 LUFS) · `audio/sfx_lib.py` + `audio/library/hsl/` (indexed SFX library, roles, spotting, sheets) ·
+-14 LUFS) · `audio/source.py` (internet sourcing: SFX kits, music search + ranking, trend research) · `audio/sfx_lib.py` (index any folder, roles, stacks, spotting, sheets, spec) ·
 `tools/timeline/` (timeline.py hand-off exporter OTIO/XML/EDL/markers, sync.py multi-cam sync) ·
-`template/` (index.html, shortform.html) · `examples/` (built films: aasthi, showcase, recipes,
-transitions, shortform/aasthi-founder).
+`template/` (index.html, shortform.html) · `references/` (style studies, edit learnings, briefs).
+Old example films, the retired `synth.py` and the old bundled sound library are archived on `D:\tools\chitram-archive\`.
 
 ---
 
@@ -141,7 +157,7 @@ transitions, shortform/aasthi-founder).
 
 You can produce the same film. Do it by discipline, not improvisation:
 - Read the three core files fully before starting (plus SHORTFORM.md when editing footage, LONGFORM.md for
-  long-form/NLE work, SOUND.md for any sound pass). Re-open the relevant section at each step.
+  long-form/NLE work, SOUND.md for any sound pass, MUSIC.md whenever there is music, MUSICVIDEO.md for music videos). Re-open the relevant section at each step.
 - Copy the structure of the closest `EXAMPLES.md` prompt, then replace every detail with this
   product's truth. Fill every field; leave nothing vague.
 - In code, use only kit functions and recipes (ENGINE §4, §6). Copy them exactly, change ids,

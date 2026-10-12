@@ -3,7 +3,7 @@
  *
  * A film is one HTML page. Its root element carries:
  *   <div id="film" data-film data-duration="30" data-fps="30"
- *        data-width="1920" data-height="1080" data-audio="assets/score.wav">
+ *        data-width="1920" data-height="1080" data-audio="assets/mix.wav">
  *
  * The page builds ONE paused GSAP timeline inside Film.build(fn). The renderer
  * (bin/render.mjs) then calls window.__film.seek(t) for every frame and
@@ -13,6 +13,7 @@
  *   [data-in] / [data-out]          -> element is visibility:hidden outside [in, out)
  *   <video data-at="12" data-offset="0.5">   -> seeked to (t - at + offset), awaited
  *   <img data-seq="assets/clip/%05d.jpg" data-at="12" data-seq-fps="30" data-count="90">
+ *   data-remap='[[filmT, srcT], ...]' on a video / sequence -> time-remapped footage (FX.speedRamp writes it)
  *                                   -> image-sequence footage (most robust footage path)
  *   ?preview in the URL, or a data-preview attribute on the root -> interactive player with scrubber + audio
  *   (never leave data-preview on for rendering; the renderer ignores the player but it adds a bar)
@@ -33,10 +34,22 @@
   root.style.height = cfg.height + "px";
 
   let tl = null;
+  const frameFns = [];                       // Film.onFrame(fn): per-frame painters, called with t on every seek
   let resolveReady;
   const ready = new Promise((r) => (resolveReady = r));
   const errors = [];
   window.addEventListener("error", (e) => errors.push(String(e.message || e)));
+
+  // time remap (speed ramps / velocity edits): data-remap='[[filmT, srcT], ...]' (written by FX.speedRamp)
+  function remap(el, t) {
+    if (!el.dataset.remap) return null;
+    const k = el._remap || (el._remap = JSON.parse(el.dataset.remap));
+    if (t <= k[0][0]) return k[0][1] + (t - k[0][0]);
+    for (let i = 1; i < k.length; i++) {
+      if (t <= k[i][0]) { const a = k[i - 1], b = k[i], u = (t - a[0]) / (b[0] - a[0] || 1); return a[1] + (b[1] - a[1]) * u; }
+    }
+    const z = k[k.length - 1]; return z[1] + (t - z[0]);
+  }
 
   function pad(n, w) { n = String(n); while (n.length < w) n = "0" + n; return n; }
   function seqSrc(pattern, i) {
@@ -60,7 +73,8 @@
       const at = parseFloat(v.dataset.at);
       const off = parseFloat(v.dataset.offset || "0");
       const rate = parseFloat(v.dataset.rate || "1");
-      let local = (t - at) * rate + off;
+      const rm = remap(v, t);
+      let local = rm != null ? rm + off : (t - at) * rate + off;
       const dur = isFinite(v.duration) ? v.duration : 0;
       local = Math.max(0, Math.min(Math.max(0, dur - 0.001), local));
       if (Math.abs(v.currentTime - local) < 0.0005 && v.readyState >= 2) continue;
@@ -82,7 +96,8 @@
       const fps = parseFloat(img.dataset.seqFps || cfg.fps);
       const count = parseInt(img.dataset.count, 10);
       const start = parseInt(img.dataset.first || "1", 10);
-      let i = Math.floor((t - at) * fps + 1e-6);
+      const rm = remap(img, t);
+      let i = Math.floor((rm != null ? rm : (t - at)) * fps + 1e-6);
       i = Math.max(0, Math.min(count - 1, i));
       const src = seqSrc(img.dataset.seq, start + i);
       if (img.getAttribute("src") === src) continue;
@@ -97,6 +112,7 @@
     t = Math.max(0, Math.min(cfg.duration, t));
     tl.seek(t, false);
     applyTimed(t);
+    for (const fn of frameFns) fn(t);
     await Promise.all([syncVideos(t), syncSequences(t)]);
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     return t;
@@ -124,11 +140,14 @@
         fn(tl);
         tl.seek(0, false);
         applyTimed(0);
+        for (const f of frameFns) f(0);
         resolveReady();
         if (/[?&]preview/.test(location.search) || root.hasAttribute("data-preview")) startPreview();
       }).catch((e) => { errors.push(String(e && e.stack || e)); console.error(e); });
     },
     get timeline() { return tl; },
+    /** Register fn(t): runs after every seek (render + preview). Must be a pure function of t (particles, wiggle). */
+    onFrame(fn) { frameFns.push(fn); },
   };
   window.Film = Film;
   window.__film = {
@@ -156,7 +175,7 @@
     const audio = cfg.audio ? new Audio(cfg.audio) : null;
     let playing = false, t0 = 0, p0 = 0;
     const sc = bar.querySelector("#__sc"), tm = bar.querySelector("#__tm"), pp = bar.querySelector("#__pp");
-    const show = (t) => { tl.seek(t, false); applyTimed(t); syncVideos(t); syncSequences(t); sc.value = t; tm.textContent = t.toFixed(2); };
+    const show = (t) => { tl.seek(t, false); applyTimed(t); for (const fn of frameFns) fn(t); syncVideos(t); syncSequences(t); sc.value = t; tm.textContent = t.toFixed(2); };
     const loop = (now) => {
       if (!playing) return;
       const t = p0 + (now - t0) / 1000;

@@ -11,7 +11,7 @@ assets, or you may have to get them yourself. The quality bar does not change in
 `DIRECTOR.md`, `ENGINE.md` and `EXAMPLES.md` still apply. This file adds what is special about
 editing footage: **understanding the talk, natural cuts, the edit plan, assets, captions and
 audio**. The gold standard is EXAMPLES #11 (the AASTHI founder edit), and its code is in
-`examples/shortform/aasthi-founder/`.
+`references/brief-aasthi-founder.md` (the build is archived on D:).
 
 `$SF` = `python $SKILL/tools/shortform/sf.py`. `ffmpeg` must be on PATH, or set `FFMPEG` to the
 ffmpeg executable (a folder also works).
@@ -173,8 +173,8 @@ Write this plan before any code, in `brief.md`, using the house Production Promp
 **With a reference edit:** watch it frame by frame (DIRECTOR §3). Write the Shot Log and the Style
 DNA (palette, textures, the 3 type voices, the motion numbers, the transition inventory and the
 layout rules). Then **keep its grammar and re-colour it** to the creator's brand. Never copy its
-content, people or logos. `examples/shortform/aasthi-founder/EDIT-LEARNS.md` is a complete study
-of this kind. `examples/studies/STYLE-STUDIES.md` holds two more house references: **Gold Premium Talking
+content, people or logos. `references/EDIT-LEARNS-aasthi-founder.md` is a complete study
+of this kind. `references/STYLE-STUDIES.md` holds two more house references: **Gold Premium Talking
 Head** (gold two-tier captions, gold UI beside the head, film-burn cuts, cream thought cards) and **Minimal Kinetic
 Green** (faceless white/green kinetic type) — when the user says "my style" / "gold edit" / "green minimal", use these.
 
@@ -213,8 +213,7 @@ its licence. Fill it in this priority order:
 5. **Free-licence stock** (Pexels, Unsplash, Pixabay, Mixkit), used only for generic B-roll or
    textures. **Ask the creator before downloading**, name the file, source and licence, and never
    use stock for the product, the team or customers.
-6. **Music:** the creator's track, or a bed composed with `audio/synth.py` (cues without a `vo`
-   block). Never use commercial songs.
+6. **Music:** the creator's track, or a licensed track chosen and fitted with MUSIC.md (`audio/music.py fit`). Never bake commercial songs (MUSIC.md §4).
 
 If a needed asset is missing and cannot be made truthfully (a customer logo, a real screenshot of
 a feature), **ask for it** or design the beat without it. Never fake it.
@@ -270,14 +269,14 @@ Craft rules:
 
 ## 8. Audio: the voice on top, always
 
-**Real SFX, placed by anchor:** use the imported library and SOUND.md (§2 grammar, §4 layers, §7
+**Real SFX, placed by anchor:** fetch this film's sounds (`audio/source.py kit`) and follow SOUND.md (§2 grammar, §4 layers, §7
 spot → mixdown). Feed `spot` from `work/cuts.json` (world switches) and the `SF.*` call times (pops,
 punch-ins, blur-cuts); `mixdown.py` then takes `"voice": "work/master.wav"`, ducks music and SFX
-under it and normalises to −14 LUFS. The synthesised route below still works for beds and quick drafts.
+under it and normalises to −14 LUFS. Music: choose and fit it with MUSIC.md (`music.py fit` → `music_fit.wav`).
 
 ```bash
-python3 $SKILL/audio/synth.py films/<name>/cues_bed.json work/bed.wav    # bed: chords, pulse, no sfx, no vo
-python3 $SKILL/audio/synth.py films/<name>/cues_sfx.json work/sfx.wav    # sfx only (pop, whoosh, chime, riser)
+python3 $SKILL/audio/music.py fit track.mp3 --duration <d> --drop-at <reveal> --out work/bed.wav   # music edit
+python3 $SKILL/audio/mixdown.py films/<name>/sfx.json work/sfx.wav   # SFX stem: {"lufs": null, "sfx": [...]}
 $SF mix --voice work/master.wav --bed work/bed.wav --sfx work/sfx.wav \
         --out films/<name>/assets/final_audio.wav --duration <film duration> [--clean]
 ```

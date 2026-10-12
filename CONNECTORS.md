@@ -81,9 +81,10 @@ note on the clip (or use the mixed stem); FCPXML (Final Cut) is not written — 
 | Visual | Image/video generators (Veo, Kling, Seedance, Runway, Higgsfield…) | their MCP/API or the user's own runs | B-roll, inserts; prompts from DIRECTOR §12 | prompts today |
 | Delivery | Drive / Telegram bot / YouTube | MCP / API | send or upload the master | only when asked, to the named destination |
 
-Adding a new SFX or music source: download into a folder, then
-`python $SKILL/audio/sfx_lib.py index "<folder>" --name <short> --import` — it becomes addressable as
-`<short>:<id>` in every cue file, with measured anchors.
+Sounds and music are fetched per film by `audio/source.py` (Openverse/Freesound, Mixkit, optional
+`FREESOUND_API_KEY` / `PIXABAY_KEY`). A new provider = a function in `source.py` returning
+`{title, url, license, author, page, duration}` with a commercial+modification licence. Any folder of your
+own sounds: `python $SKILL/audio/sfx_lib.py index "<folder>" --name <short>` → `<short>:<id>` cues.
 
 ## 4. DaVinci Resolve: conforming the hand-off pack
 

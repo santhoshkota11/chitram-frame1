@@ -27,11 +27,14 @@ if (tplName === "shortform.html") {
     .replaceAll("{{FACE_X}}", fx).replaceAll("{{FACE_Y}}", fy).replaceAll("{{FACE_W}}", fw).replaceAll("{{FACE_H}}", fh);
 }
 fs.writeFileSync(path.join(dest, "index.html"), tpl);
-fs.copyFileSync(path.join(skill, "template", "cues.json"), path.join(dest, "cues.json"));
+// sound starts from a mix sheet (SOUND.md / MUSIC.md): voice, music fitted to the cut, anchored library SFX
+fs.writeFileSync(path.join(dest, "mix.json"), JSON.stringify({ duration: +duration, voice: null, music: null, sfx: [],
+  lufs: -14, true_peak: -1 }, null, 1));
 console.log(`Film project ready: ${dest}
   edit      ${path.join(dest, "index.html")}
   preview   node ${path.join(skill, "bin/preview.mjs")} ${dest}
   check     node ${path.join(skill, "bin/check.mjs")} ${dest}
   snapshot  node ${path.join(skill, "bin/render.mjs")} ${dest} --at 1,5,10
-  audio     python3 ${path.join(skill, "audio/synth.py")} ${path.join(dest, "cues.json")} ${path.join(dest, "assets/score.wav")}
+  music     python3 ${path.join(skill, "audio/music.py")} analyse <track.mp3>      (MUSIC.md: beats, drop, sections)
+  audio     python3 ${path.join(skill, "audio/mixdown.py")} ${path.join(dest, "mix.json")} ${path.join(dest, "assets/mix.wav")}
   render    node ${path.join(skill, "bin/render.mjs")} ${dest} --out ${path.join(dest, "out/film.mp4")}`);

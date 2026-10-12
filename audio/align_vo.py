@@ -4,7 +4,7 @@ Split a voiceover into phrases so each phrase can be placed on its caption.
 
     python3 align_vo.py voiceover.m4a [--noise -40] [--gap 0.25] [--asr]
 
-Prints JSON: [{"src": [start, end], "text": "..."}]  -> paste into cues.json "vo.phrases"
+Prints JSON: [{"src": [start, end], "text": "..."}]  -> map each phrase to its caption time (ENGINE §10)
 and add "at": <film time> to each (the time its caption appears).
 
 --asr  also runs offline speech recognition (pip install pocketsphinx) to label each

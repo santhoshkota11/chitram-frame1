@@ -58,7 +58,7 @@ how to build (e.g. "liquid glass", "Apple-style parallax text", "SVG morph", "go
    replace `setTimeout` sequencing with timeline positions; no GSAP club plugins unless their file
    is bundled locally — build the equivalent with core tweens (split text yourself, draw SVG with
    `strokeDashoffset`, morph with interpolated path points or clip-path).
-6. **Prototype small:** a 3–6 s test page (copy `examples/recipes/`), snapshot at 3–5 times, check
+6. **Prototype small:** a 3–6 s test page (`init.mjs --duration 5`), snapshot at 3–5 times, check
    the look against the source. Only then put it in the film.
 7. **Record what you learned** as a short recipe comment in the film (source URL + mechanism), so
    the next edit doesn't re-research.
@@ -88,7 +88,8 @@ pip install numpy scipy pillow opencv-python-headless    # audio + asset tools
 # per film
 node $SKILL/bin/init.mjs films/<name> --duration 30 --size 1920x1080 --fps 30
 python3 $SKILL/tools/prep_image.py …                    # assets (§9)
-python3 $SKILL/audio/synth.py films/<name>/cues.json films/<name>/assets/score.wav
+python3 $SKILL/audio/music.py fit track.mp3 --duration 30 --drop-at 12 --out films/<name>/assets/music_fit.wav
+python3 $SKILL/audio/mixdown.py films/<name>/mix.json films/<name>/assets/mix.wav
 node $SKILL/bin/check.mjs films/<name>                  # QA gate (must be 0 errors)
 node $SKILL/bin/render.mjs films/<name> --at 1.5,5,9.8  # snapshots + contact sheet
 node $SKILL/bin/render.mjs films/<name> --draft         # half-res 15 fps review video (fast)
@@ -103,7 +104,7 @@ Render speed reference: 1080p ≈ 10–12 frames/s with 4 workers on a laptop-cl
 
 ## 1. The runtime contract (non-negotiable)
 
-1. Root element: `<div id="film" data-film data-duration="30" data-fps="30" data-width="1920" data-height="1080" data-audio="assets/score.wav">`. These attributes are the single source of truth.
+1. Root element: `<div id="film" data-film data-duration="30" data-fps="30" data-width="1920" data-height="1080" data-audio="assets/mix.wav">`. These attributes are the single source of truth.
 2. Scripts in order: `engine/vendor/gsap.min.js` (head) → markup → `engine/runtime.js` → `engine/motion-kit.js` → your script.
 3. All animation lives inside **one** call: `Film.build((tl) => { ... })`. `tl` is a paused GSAP timeline. Position every tween with an **absolute time** (third argument).
 4. Deterministic only. **Banned:** `Math.random` (use `MK.rng(seed)`), `Date.now`/`performance.now`, `setTimeout`/`setInterval`/`requestAnimationFrame` for animation, `repeat: -1` (use `MK.repeats(span, period)`), CSS `@keyframes`/`animation`/`transition`, `tl.play()`, network fetches, `<video>.play()`.
@@ -122,10 +123,10 @@ Render speed reference: 1080p ≈ 10–12 frames/s with 4 workers on a laptop-cl
 films/<name>/
   index.html        the film (one page)
   brief.md          Production Brief + Build Sheet (from DIRECTOR.md)
-  cues.json         audio cue sheet
+  mix.json          the sound sheet: voice, fitted music, SFX cues/stacks (SOUND.md, MUSIC.md)
   engine/           copied by init (runtime, kit, fonts, gsap) — do not edit per film; optional:
                     if absent, the renderer and check serve the skill's shared engine/
-  assets/           screens, logo, photos, footage, score.wav
+  assets/           screens, logo, photos, footage, music_fit.wav (+ .beats.js), mix.wav
   snapshots/        check images (generated)
   out/              renders (generated)
 ```
@@ -160,7 +161,7 @@ Positioning: layers are `position:absolute; inset:0` (`.layer`). Text uses `.t` 
 5. **Timeline, scene by scene,** in time order, one block per Build Sheet scene, each block starting
    with a comment `// SCENE n | 00:03–00:07 | name`. Use kit functions; write raw tweens only for
    camera/device moves and CUSTOM effects.
-6. **Audio:** write `cues.json` from the Build Sheet's sfx column (§10). Run `synth.py`.
+6. **Audio:** fit the music (MUSIC.md §5), write `mix.json` SFX from the Build Sheet's sfx column (SOUND.md), run `mixdown.py`.
 7. `check.mjs` → fix every ERROR and every warning that is a real problem (§11.2).
 8. **Snapshots**: `render.mjs <film> --at scenes` (storyboard sheet: every scene midpoint + ends),
    plus explicit times for every transition midpoint. Read the contact sheet. Fix what fails the visual checklist (§11.3). Repeat
@@ -175,7 +176,7 @@ assets ─┐
 audio  ─┼─→ (VO? duration sync: captions follow real phrase times) ─→ transitions ─→ verify ─→ final look ─→ render
 layout ─┘        (static layout → storyboard sheet → animate scene by scene)
 ```
-Independent work runs in parallel: synthesize the score (`synth.py`) and prepare images while you
+Independent work runs in parallel: analyse/fit the music (`music.py`) and prepare images while you
 write the layout. Inside a chain, order is fixed: never animate before the static layout passes
 its snapshot; never time captions to a VO you haven't measured; never render before `check.mjs`.
 Batch visual checks: one contact sheet beats many single-frame looks (each image you read costs
@@ -222,7 +223,7 @@ target before `t` automatically.
 — scene-to-scene handoff between two full-frame scene containers; types `cut` · `crossfade` ·
 `blur` · `zoom` · `push` · `whipPan` · `iris` · `blinds` · `shutter` · `dip` (velocity-matched:
 the outgoing side accelerates out, the incoming side decelerates in, fastest at the swap). Both
-scenes' `data-in/out` must cover the transition window. Tested in `examples/transitions/`.
+scenes' `data-in/out` must cover the transition window. (Its test page is archived on D:.)
 
 ### Ambience & motion
 `els = MK.bokeh(layer, {count=6, colors, size:[260,520], seed, edges=true})` + `MK.drift(tl, els, start, end, {amp=40, period=6})` ·
@@ -254,6 +255,43 @@ whose every cut lands on a spoken word (voice from `audio/tts_vo.py` → `assets
 | `ED.boil(tl, ".b", D)` | ±1.2 px / ±0.5° paper boil per held frame |
 | `ED.pushThrough(tl, room, dark, x, y, t)` → reveal time | camera pushes into a point (laptop screen) while a dark world opens from it — land the music drop on the return value |
 | `ED.walk(tl, el, t0, t1, dx)` / `ED.jump(tl, el, t, fromX, toX)` | flat characters: bob-walk on twos · arc jump out of a crowd |
+
+### FX kit (engine/fx-kit.js, global `FX`) — cinematic finish + viral beat-sync
+Load after `motion-kit.js`, with the music grid from `audio/music.py fit` (MUSIC.md):
+`<script src="engine/fx-kit.js"></script><script src="assets/music_fit.beats.js"></script>`. All seek-safe.
+
+| Call | Use for |
+|---|---|
+| `G = FX.grid()` | `G.beats · downbeats · phrases · accents · drop · sections · bpm`, in film time |
+| `FX.onBeats(times, (t, i) => …, {from, to, every, min})` | run any effect on the grid (clamped to the film) |
+| `FX.punch(tl, wrap, t, {scale=1.08, dur=.32})` · `FX.beatPulse(tl, wrap, G.downbeats, {scale, every, from, to})` | beat zoom hit / the edit breathing with the music (animate a WRAPPER, not the footage) |
+| `FX.shake(tl, el, t, {amp=16, dur=.45, rot=1.2, freq=26})` · `FX.drift(tl, el, t0, t1, {amp=8})` | impact / 808 shake · handheld life on static frames |
+| `FX.speedRamp(videoOrSeq, [[filmT, speed], …])` | velocity edit: slow-mo → snap (writes `data-remap`; the runtime time-remaps the footage) |
+| `FX.flash(tl, t, {color, peak=.85, dur=.22})` · `FX.whiteOut(tl, t)` | impact flash on a hit/drop · burn to white for a big swap |
+| `FX.lightLeak(tl, t, {dur=1.4, colors, from})` | warm film burn: memory, warmth, soft transition |
+| `FX.grain(tl, {opacity=.12, fps=24})` · `FX.vignette(tl, {strength=.55})` · `FX.glow(el, {color, size})` | film texture (keep grain ≤ .14: it raises the bitrate) · corner falloff · neon/bloom on type |
+| `FX.grade(tl, el, preset, {at})`, presets in `FX.grades` | `teal-orange · warm-film · cold-thriller · bleach · mono-noir · punch · faded-memory` |
+| `FX.letterbox(tl, t, {ratio, bar, out})` | 2.39 bars on 16:9; thin 9 % cinema bars on 9:16 by default |
+| `FX.zoomBlur(tl, from, to, t)` · `FX.rgbSplit(tl, el, t, {px=14})` | zoom-through transition (add `FX.flash`) · chromatic glitch on a beat switch |
+| `FX.beatCuts(tl, scenes, times, {start, punch, flash, shake})` | photo/clip montage cut exactly on the music |
+
+**Music-video animation pack** (full catalogue by asset type: MUSICVIDEO.md §4):
+| Call | Use for |
+|---|---|
+| `r = FX.rig(el)` | nested wrappers `r.move > r.shake > r.punch > content` so camera moves never fight |
+| `FX.handheld(tl, el, t0, t1, {amp})` · `FX.wiggle(tl, el, t0, t1, {freq, amp, rot, scale})` | handheld camera · AE-style wiggle (per-frame, CSS translate/rotate: stacks on GSAP transforms) |
+| `FX.zoomIn(tl, from, to, t, {x, y})` · `FX.slideWipe(tl, from, to, t, {dir, dist})` · `FX.flip3d(tl, from, to, t, {axis})` | zoom-into-a-point transition · slight left/right push · 3D card flip (dark backdrop mid-turn) |
+| `FX.wipe(tl, el, t, {dir: left·right·up·down·all·center-h·center-v·diag, mode})` | clip-path wipes; `all` = box opening from all sides |
+| `FX.splatter(tl, t, {colors, zoomTarget})` · `FX.tear(tl, el, t)` | organic ink splat cover → swap → reveal · torn paper |
+| `FX.dof(tl, {bg, subject, blur, at})` · `FX.parallax(tl, [{el, depth}], t0, t1, {push, pan})` | depth of field / rack focus · 2.5D multi-plane dolly |
+| `FX.zoom3d(tl, el, t, {from, through})` · `FX.xyz(tl, el, t, {from, to})` | Z-axis fly-in (or through the lens) · rotate on X/Y/Z while zooming |
+| `FX.popUp(tl, els, t, {stagger})` · `FX.shine(tl, el, t)` · `FX.sweepLight(tl, t, {dir})` | squash-overshoot pop · gloss sweep on an element · light beam across the frame |
+| `FX.particles(tl, {type, at, from, to, x, y, count, colors})` | dust · sparks · embers · confetti · snow · bokeh · burst (canvas, per-frame) |
+| `Film.onFrame(t => …)` (runtime) | your own per-frame painter (custom canvas art); must be a pure function of t |
+
+Taste: one look per film (grade + grain + vignette); FX on *meaningful* beats (downbeats, the drop,
+accents), never on every beat; velocity ramps on 2–3 moments; the drop gets the biggest combo
+(zoomBlur + flash + shake + `stack:drop`), once.
 
 ---
 
@@ -689,16 +727,19 @@ python3 $SKILL/tools/dotify.py png/x.png assets/x_dots.png --cell 6 --paper "#ED
 
 ## 10. Audio
 
-**Pro sound pass → SOUND.md** (308 measured library sounds, roles, anchors: hit transient / whoosh
+**Pro sound pass → SOUND.md** (sounds fetched per film from the internet by `audio/source.py`, roles, anchors: hit transient / whoosh
 peak / riser end on the frame, layering, −14 LUFS mix). Kit call times below are your spotting list.
 
-1. Copy `template/cues.json`, set `duration`, `mood`, `bpm`, chord changes at scene starts.
-2. Add SFX from the Build Sheet (use the times returned by kit calls: `MK.karaoke` word times →
-   `click`, `MK.glitchIn` ticks → `tick`, whip start → `whoosh`, lifts → `shimmer`, logo → `chime`).
-3. `pulse.from/to/skip`: start with the reveal, stop for whips and before the end card.
-4. Voiceover: `python3 $SKILL/audio/align_vo.py vo.m4a --asr` → phrase list. Map each phrase to
-   its caption's reveal time (`"at"`), set `"tempo"` (≤ 1.08) if it must fit, `"duck": 0.55`.
-   Then re-time captions so each appears as its words start. Re-run `synth.py`.
+1. **Music** (MUSIC.md): write the music brief, choose a track, `music.py analyse` (read the sheet),
+   `music.py fit --duration <film> --drop-at <reveal>` → `assets/music_fit.wav` + `music_fit.beats.js`.
+   Load the beats file in the page and time cuts/effects from `FX.grid()` (§4 FX kit).
+2. **SFX** (SOUND.md): cues from the Build Sheet, timed by the kit's returned times (`MK.karaoke` word
+   times → `role:click`, `MK.glitchIn` ticks → `stack:glitch`, whip swap → `stack:cut`/`stack:whoosh_hit`,
+   logo → `stack:reveal` + `stack:ding`, drop → `stack:drop`). Use stacks for anything that must feel big.
+3. **Voice:** `audio/tts_vo.py` (temp VO with a word clock) or the real VO; `align_vo.py vo.m4a --asr` →
+   phrase list to re-time captions.
+4. `mix.json` (`voice`, `music`, `sfx`) → `python3 $SKILL/audio/mixdown.py mix.json assets/mix.wav`;
+   then look at `sfx_lib.py spec assets/mix.wav --marks <cut times>`.
 5. Set `data-audio` on the root; the renderer muxes it (trimmed to duration). Target loudness for
    web/social ≈ −14 LUFS (`ffmpeg -i out.mp4 -af ebur128 -f null -` to measure).
 
@@ -834,8 +875,8 @@ gets the same result by following the path exactly:
 
 1. **Never write an effect the kit already has.** Look it up in §4 / §6 first. Copy recipes
    verbatim, then change ids, times, colours, copy.
-2. **Start from `template/index.html`** or the closest example (`examples/aasthi`,
-   `examples/showcase`). Copy its structure; don't redesign the layer stack.
+2. **Start from `template/index.html`** (or `template/shortform.html`). Copy its structure; don't
+   redesign the layer stack.
 3. **Work from the Build Sheet row by row.** One kit call per row. Keep the scene comments.
 4. **Static layout → snapshot → then animate.** Most visual bugs are layout bugs; catch them
    with one snapshot before writing the timeline.
